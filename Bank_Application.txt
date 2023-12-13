@@ -1,0 +1,1732 @@
+package com.sai.Wate;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.InputMismatchException;
+import java.util.List;
+import java.util.Random;
+import java.util.Scanner;
+
+import com.sai.Wate.Transaction.Bank;
+
+
+public class BankApplication {
+    static long accountNumberCounter = 9871236540L;
+    static List<Customer> customers = new ArrayList<>();
+    static Scanner scanner = new Scanner(System.in);
+
+    public static void main(String[] args) {
+        System.out.println("\n  -------------------------- ^-> Welcome to My Bank <-^ -----------------------");
+        displayMainMenu();
+    }
+
+// ------------------------- Main Menu Starts From Here  ---------------------------------
+
+	public static void displayMainMenu() {
+		
+		while (true) {
+			try {
+				System.out.println("\n\t\t\t   ---- Main Menu (Home) ----");
+				System.out.print("\n\t\tFeatures\t \t\t\tSigns... \n\t\t--------\t \t\t\t-----");
+				System.out.println("\n\ta. New User      | \t \t **----** - Error Message");
+				System.out.println("\tb. User Menu     | \t \t         !- Input Invalid");
+				System.out.println("\tc. Admin Menu    |");
+				System.out.println("\te. Exit          |");
+
+				char option = Character.toLowerCase(getUserOption(scanner));
+				scanner.nextLine();
+				switch (option) {
+				case 'e':
+					System.out.println("\n\t\t=> Thank You For Using. Visit Again.<=");
+					System.exit(0);
+				case 'a':
+					createNewAccount(scanner, customers, accountNumberCounter++);
+					break;
+				case 'b':
+					handleExistingUser(scanner, customers);
+					break;
+				case 'c':
+					handleAdmin(scanner, customers);
+					break;
+				default:
+					System.out.println("!Invalid option. Please enter a single character 'a', 'b', 'c', or 'e'.");
+					break;
+				}
+			} catch (InputMismatchException e) {
+				System.out.println("Input error: Please enter a valid input.");
+				scanner.nextLine();
+			} catch (Exception e) {
+				System.out.println("An error occurred: " + e.getMessage());
+				scanner.nextLine();
+			}
+		}
+	}
+
+	protected static char getUserOption(Scanner scanner) {
+		char option;
+		String input = null;
+		do {
+			System.out.print("\n-> Select an option : ");
+			input = scanner.next().toLowerCase();
+			option = input.charAt(0);
+
+			if (!input.matches("[abce]") || input.length() != 1) {
+				System.out.println("!Invalid option. Please enter a single character 'a', 'b', 'c', or 'e'.");
+			}
+		} while (!input.matches("[abce]") || input.length() != 1);
+		return option;
+	}
+
+// ------------------------------------- New User Create New Account - Starts From Here-------------------------------------
+
+    public static void createNewAccount(Scanner scanner, List<Customer> customers, long accountNumberCounter) {
+        System.out.println("\n \t----------- Enter Details For Creating a New Account in This Bank ---------------");
+        System.out.println("\n\t\t\t ---- '0' for Back ----\n");
+
+        String fullName = getFullName();
+        
+        String mobileNumber = getMobileNumber();
+        
+
+        int otp = generateOTPRandom();
+        int enterOtp = verifyOTP(otp);
+        if (enterOtp == 0) {
+            System.out.println("\n<-- Back to Main Menu");
+            displayMainMenu();
+            return;
+        }
+
+        String dob = getDOB();
+        if (dob.equals("0")) {
+            System.out.println("\n<-- Back to Main Menu");
+            displayMainMenu();
+            return;
+        }
+
+        String accountOpenDate = getCurrentDate();
+
+        int atmPin = getATMPin();
+
+        double initialAmount = getInitialAmount();
+
+        long accountNumber = accountNumberCounter++;
+        System.out.println("\n\t\t\t----- Your Account Created Successfully -----");
+        System.out.println("\n\t\tYour Account Number: " + accountNumber);
+
+        int transactionCount = 0;
+
+        Customer newCustomer = new Customer(accountNumber, fullName, mobileNumber, dob, accountOpenDate, atmPin,
+                initialAmount, transactionCount);
+        customers.add(newCustomer);
+    }
+
+    private static String getFullName() {
+        String fullName = null;
+
+        do {
+            System.out.print("-> Enter Account Holder Full Name  (Min 4 Char) : ");
+            fullName = scanner.nextLine().toUpperCase();
+
+            if (fullName.length() == 1 && fullName.equals("0")) {
+            	System.out.println("\n<-- Back to Main Menu");
+                displayMainMenu();
+            }
+            else if (fullName.matches(".*\\d+.*")) {
+                System.out.println("\n\t!Note: ** Name should only contain alphabetical characters. Please enter a valid name.**\n");
+            } else if (fullName.length() < 4) {
+                System.out.println("\n\t!Note: ** Name should be at least 4 characters long. Please enter a valid name.**\n");
+            }
+        } while (fullName.matches(".*\\d+.*") || fullName.length() < 4);
+
+        return fullName;
+    }
+
+
+    private static String getMobileNumber() {
+        String mobileNumber;
+        do {
+            System.out.print("\n-> Enter Account Holder Mobile No (10 digits)   : ");
+            mobileNumber = scanner.nextLine();
+            mobileNumber = mobileNumber.replaceAll("[^0-9]", "");
+
+            if (mobileNumber.length() == 1 && mobileNumber.equals("0")) {
+            	System.out.println("\n<-- Back to Main Menu");
+                displayMainMenu();
+            } 
+            else if (mobileNumber.length() != 10) {
+                System.out.println("\n\t\t** You Entered " + mobileNumber.length() + " Digits.**");
+                System.out.println("\n\t\t!Note: Please Enter 10 digits Of Mobile number.\n");
+            }
+        } while (mobileNumber.length() != 10 );
+
+        return mobileNumber;
+    }
+
+    private static int generateOTPRandom() {
+        Random random = new Random();
+        int otp = random.nextInt(1000, 9999);
+        System.out.println("Your OTP Number For Verification: " + otp);
+        return otp;
+    }
+
+    private static int verifyOTP(int generatedOTP) {
+        int enterOtp;
+        do {
+            System.out.print("\n-> Enter Your OTP Number For Verification : ");
+            enterOtp = scanner.nextInt();
+            if (enterOtp == 0) {
+                System.out.println("\n<-- Back to Main Menu");
+                displayMainMenu();
+                return 0;
+            }
+
+            if (generatedOTP != enterOtp) {
+                System.out.println("\n\t** Your Entered OTP Is Wrong.**\n");
+            }
+        } while (generatedOTP != enterOtp);
+
+        System.out.println("Entered OTP Correct. \nYour Mobile Number Verified Successfully.");
+        scanner.nextLine(); // Consume the newline character
+        return enterOtp;
+    }
+
+    private static String getDOB() {
+        String dob;
+        boolean isValidDob;
+
+        do {
+            System.out.print("\n-> Enter Account Holder DOB (dd/mm/yyyy) : ");
+            dob = scanner.nextLine();
+            isValidDob = dob.matches("^(0[1-9]|[12][0-9]|3[01])/(0[1-9]|1[0-2])/\\d{4}$");
+
+            if (!isValidDob) {
+                System.out.println("Invalid DOB format. Please use dd/mm/yyyy format with valid day, month, and year.\n");
+            }
+        } while (!isValidDob);
+
+        return dob;
+    }
+
+    private static int getATMPin() {
+        int atmPin = 0;
+        boolean isValidPin;
+        do {
+            System.out.print("\n-> Enter ATM Pin Number (4 digits): ");
+            String pinInput = scanner.next();
+            isValidPin = pinInput.matches("\\d{4}");
+
+            if (!isValidPin) {
+                System.out.println("!Invalid ATM PIN. ** Please enter a 4-digit PIN with only numeric characters.**\n");
+            } else {
+                atmPin = Integer.parseInt(pinInput);
+            }
+        } while (!isValidPin);
+
+        return atmPin;
+    }
+
+    protected static double getInitialAmount() {
+        double initialAmount;
+
+        do {
+            System.out.print("\n-> Enter Initial Amount (minimum 2500 rs) : ");
+            initialAmount = scanner.nextDouble();
+
+            if (initialAmount == 0) {
+                System.out.println("\n<-- Back to Main Menu");
+                displayMainMenu();
+                return 0;
+            }
+
+            if (initialAmount < 2500.0) {
+                System.out.println("!Note: Initial amount must be at least 2500 rs. Please enter a valid amount.\n");
+            }
+        } while (initialAmount < 2500.0);
+
+        return initialAmount;
+    }
+
+    private static String getCurrentDate() {
+        LocalDate date = LocalDate.now();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+        return date.format(formatter);
+    }
+	
+// ------------------------------------ User Menu - Starts From Here -----------------------------------
+
+	protected static void handleExistingUser(Scanner scanner, List<Customer> customers) {
+	    System.out.println("\n\t\t\t --- User Menu ---");
+	    System.out.println("\n1. Check Balance");
+	    System.out.println("2. Mini Statement");
+	    System.out.println("3. Withdraw Amount \t\t0. Back (Main Menu)");
+	    System.out.println("4. Add Amount");
+	    System.out.println("5. Change ATM Pin");
+	    System.out.println("6. Mobile Number - Management  \n7. Transfer Money\n8. Log Out");
+
+	    int option1 = 0;
+
+	        try {
+	            System.out.print("\n-> Select an option (0-8) : ");
+	            option1 = scanner.nextInt();
+
+	            if (option1 >= 0 && option1 <= 8) {
+	  
+	            } else {
+	                System.out.println("!Invalid input. Please enter a valid option (0-8).");
+	            }
+	        } catch (java.util.InputMismatchException e) {
+	            System.out.println("Invalid input. Please enter a valid integer option.");
+	            scanner.next();
+	        }
+	        
+	        while(true) {
+	        switch (option1) {
+	            case 0:
+	                System.out.println("\n<-- Back to the Main Menu.");
+	                displayMainMenu();
+	                break;
+
+	            case 8:
+	                System.out.println("\n\t\t ---- Log Out Successfully. ----\n\n<-- Back to the Main Menu.");
+	                displayMainMenu();
+	                break;
+
+	            case 1:
+	                System.out.println("\n\t\t--- Balance Checking ---");
+	                checkBalance(scanner, customers);
+	                break;
+
+	            case 2:
+	                miniStatement(scanner, customers);
+	                break;
+
+	            case 3:
+	                System.out.println("\n\t\t--- Withdraw Amount ----");
+	                withdrawAmount(scanner, customers);
+	                break;
+
+	            case 4:
+	                System.out.println("\n\t\t--- Add Amount ----");
+	                addAmount(scanner, customers);
+	                break;
+
+	            case 5:
+	                System.out.println("\n\t\t---- Change ATM Pin ----");
+	                changePinNumber(scanner, customers);
+	                break;
+
+	            case 6:
+	                System.out.println("\n\t\t ---- Mobile Number - Management ----");
+	                manageMobileNumber(scanner, customers);
+	                break;
+	                
+	            case 7:
+	                performTransfer(customers);
+	                break;
+
+	            default:
+	                System.out.println("Invalid option.");
+	        }
+	    }
+	}
+	
+	protected static void checkBalance(Scanner scanner, List<Customer> customers) {
+		boolean exit = false;
+	    while (!exit) {
+	        try {
+	            System.out.println("\n\t\t0. Back\t1. With Account Number\t2. With ATM Pin");
+	            System.out.print("\n-> Select an option: ");
+
+	            int checkBalanceOption = scanner.nextInt();
+	            scanner.nextLine(); 
+
+	            switch (checkBalanceOption) {
+	                case 0:
+	                    System.out.println("\n<-- Back to The User Menu ");
+	                    handleExistingUser(scanner, customers);
+	                    return;
+
+	                case 1:
+	                    handleAccountNumberOption(scanner, customers);
+	                    break;
+
+	                case 2:
+	                    handleATMPinOption(scanner, customers);
+	                    break;
+
+	                default:
+	                    System.out.println("Invalid option. Please choose a valid option.");
+	                    break;
+	            }
+	        } catch (InputMismatchException e) {
+	            System.out.println("\n\t** Invalid input. Please enter a valid option. **");
+	            scanner.nextLine();
+	        }
+	    }
+	}
+
+	protected static void handleAccountNumberOption(Scanner scanner, List<Customer> customers) {
+
+		try {
+			while (true) {
+				System.out.println("\n\t\t ----- Check Balance With Account Number -----\n");
+				System.out.print("-> Enter Account Number : ");
+				long accountNumber = scanner.nextLong();
+				
+				if(accountNumber == 0) {
+					System.out.println("\n<-- Back to User Menu");
+					handleExistingUser(scanner, customers);
+				}
+
+				Customer customer = findCustomerByAccountNumber(customers, accountNumber);
+
+				if (customer != null) {
+					System.out.println("\n\t\t\t\t | ----- Holder Name ----- |");
+					System.out.println("\t\t\t\t | " + customer.getFullName() + " |");
+					System.out.println("\n\t\t\t\t --- account balance: " + customer.getBalance() + " ---\n");
+					break;
+				} else {
+					System.out.println("Account not found. Please check the account number.");
+				}
+			}
+		} catch (InputMismatchException e) {
+			System.out.println("\n\t** Invalid input. Please enter a valid numeric account number. **");
+			scanner.nextLine();
+		} catch (NumberFormatException e) {
+			System.out.println("\n\t** Invalid input. Please enter a valid numeric account number. **");
+			scanner.nextLine();
+		}
+	}
+
+	protected static void handleATMPinOption(Scanner scanner, List<Customer> customers) {
+		try {
+			System.out.println("\n\t\t--- Check Balancd with ATM Pin ---\n");
+			System.out.print("-> Enter your ATM Pin to check balance : ");
+			int enteredPin = scanner.nextInt();
+
+			Customer customerWithPin = findCustomerByAtmPin(customers, enteredPin);
+
+			if (customerWithPin != null && customerWithPin.isCorrectPin(enteredPin)) {
+				customerWithPin.checkBalanceWithPin(scanner);
+			} else {
+				System.out.println("Invalid ATM Pin. Access denied atm Pin.");
+			}
+		} catch (InputMismatchException e) {
+			System.out.println("\n\t** Invalid input. Please enter a valid ATM Pin. **");
+			scanner.nextLine();
+		}
+	}
+
+	protected static Customer checkBalanceByAtmPin(List<Customer> customers, int enteredPin) {
+		return null;
+	}
+
+	protected static void miniStatement(Scanner scanner, List<Customer> customers) {
+		Customer customer;
+		System.out.println("\n\t\t ---- Mini Statement ----");
+
+		while (true) {
+			System.out.println("\n\t0.Back \t1. With Account Number \t\t 2. With ATM Pin");
+
+			try {
+				System.out.print("\n-> Choose an option : ");
+				int miniStatementOption = scanner.nextInt();
+
+				if (miniStatementOption == 0) {
+					System.out.println("\n<-- Back to the User Menu");
+					handleExistingUser(scanner, customers);
+					break;
+				}
+
+				if (miniStatementOption == 1) {
+					System.out.println("\n\t\t --- Mini Statement With Account Number ---");
+					System.out.print("\n-> Enter Account Number : ");
+					long enteredAccountNumber = 0;
+					
+					try {
+						enteredAccountNumber = scanner.nextLong();
+					} catch (InputMismatchException e) {
+						System.out.println("Invalid input for account number. Please enter a valid number.");
+						scanner.nextLine();
+					}
+
+					if(enteredAccountNumber == 0) {
+						System.out.println("\n<-- Back to User Menu");
+						handleExistingUser(scanner, customers);
+					}
+					
+					customer = findCustomerByAccountNumber(customers, enteredAccountNumber);
+
+					if (customer != null) {
+						customer.miniStatement();
+					} else {
+						System.out.println("Account not found. Please check the account number.");
+					}
+				} else if (miniStatementOption == 2) {
+					System.out.println("\n\t\t --- Mini Statement With ATM Pin ---");
+					System.out.print("-> Enter ATM Pin : ");
+					int enteredPin = 0;
+
+					try {
+						enteredPin = scanner.nextInt();
+					} catch (InputMismatchException e) {
+						System.out.println("Invalid input for ATM Pin. Please enter a valid number.");
+						scanner.nextLine();
+						return;
+					}
+
+					customer = findCustomerByAtmPin(customers, enteredPin);
+
+					if (customer != null) {
+						customer.miniStatement();
+					} else {
+						System.out.println("Invalid ATM Pin. Access denied.");
+					}
+				} else {
+					System.out.println("Invalid option.");
+				}
+			} catch (InputMismatchException e) {
+				System.out.println("Invalid input. Please enter a valid integer.");
+				scanner.nextLine();
+			}
+		}
+	}
+
+	protected static Customer findCustomerByAtmPin(List<Customer> customers, int enteredPin) {
+		return null;
+	}
+
+	protected static void withdrawAmount(Scanner scanner, List<Customer> customers) {
+		Customer customer = getCustomerByAccountNumber(scanner, customers);
+		System.out.println("\n\t---- Accounter Name : "+  customer.getFullName() + " ----");
+
+		if (customer != null) {
+			while (true) {
+				try {
+					System.out.print("\n-> Enter the amount to withdraw : ");
+
+					if (scanner.hasNextDouble()) {
+						double withdrawAmount = scanner.nextDouble();
+
+						if (withdrawAmount < 0) {
+							throw new IllegalArgumentException("Amount cannot be negative.");
+						}
+
+						if (customer.getBalance() >= withdrawAmount) {
+							customer.withdraw(withdrawAmount,"Withdraw");
+							System.out.println("\n\t\t--- Updated Balance: " + customer.getBalance() + " ---");
+							break;
+						} else {
+							System.out.println("Insufficient funds. Cannot withdraw more than the available balance.");
+						}
+					} /*else {
+						System.out.println("Invalid input. Please enter a valid numeric amount.");
+						scanner.nextLine();
+					}*/
+				} catch (InputMismatchException e) {
+					System.out.println("Invalid input. Please enter a valid numeric amount.");
+					scanner.nextLine();
+				} catch (IllegalArgumentException e) {
+					System.out.println("Error: " + e.getMessage());
+				}
+			}
+		}
+	}
+
+	protected static void addAmount(Scanner scanner, List<Customer> customers) {
+		Customer customer = getCustomerByAccountNumber(scanner, customers);
+		System.out.println("\n\t---- Accounter Name : "+  customer.getFullName() + " ----");
+
+		if (customer != null) {
+			while (true) {
+				try {
+					System.out.print("\n-> Enter the amount to add : ");
+
+					if (scanner.hasNextDouble()) {
+						double addAmount = scanner.nextDouble();
+
+						if (addAmount < 0) {
+							throw new IllegalArgumentException("Amount cannot be negative.");
+						}
+
+						customer.addAmount(addAmount, "Add");
+						System.out.println("\n\t\t--- Updated Balance: " + customer.getBalance() + " ---");
+						break;
+					} else {
+						System.out.println("Invalid input. Please enter a valid numeric amount.");
+						scanner.nextLine();
+					}
+				} catch (InputMismatchException e) {
+					System.out.println("Invalid input. Please enter a valid numeric amount.");
+					//scanner.nextLine();
+				} catch (IllegalArgumentException e) {
+					// System.out.println("Error: " + e.getMessage());
+				}
+			}
+		}
+	}
+
+	protected static void changePinNumber(Scanner scanner, List<Customer> customers) {
+		Customer customer = getCustomerByAccountNumber(scanner, customers);
+
+		if (customer != null) {
+		    try {
+		        System.out.print("\n-> Your Details for Confirmation : " + customer.mobileNumber + " - " + customer.fullName);
+		        System.out.println("\n");
+		        System.out.print("=> Confirm With Your Details [Y/N] : ");
+		        scanner.nextLine();
+		        char confirm = scanner.nextLine().toUpperCase().charAt(0);
+		        if (confirm == 'Y') {
+		            int otp = generateOTP();
+		            System.out.print("Your OTP Number For Verification: " + otp);
+
+		            int enterOtp;
+		            do {
+		                System.out.print("\n\n-> Enter Your OTP Number For Verification : ");
+		                String otpInput = scanner.nextLine();
+
+		                if (!otpInput.isEmpty() && otpInput.matches("\\d+")) {
+		                    enterOtp = Integer.parseInt(otpInput);
+		                    if (otp != enterOtp) {
+		                        System.out.println("\n\t** Invalid OTP. Please enter the correct OTP. **\n");
+		                    }
+		                } else {
+		                    System.out.println("\n\t** Invalid OTP. Please enter a valid numeric OTP. **\n");
+		                    enterOtp = -1;
+		                }
+		            } while (otp != enterOtp);
+				System.out.println("\n\tEntered OTP Valid. \nYour Mobile Number Verified Successfully.");
+
+				System.out.print("\n-> Enter new ATM PIN : ");
+				int newPin = scanner.nextInt();
+
+				if (newPin < 0) {
+					throw new IllegalArgumentException("PIN cannot be negative.");
+				}
+
+				customer.changePin(newPin);
+		        }
+		        } catch (InputMismatchException e) {
+				System.out.println("Invalid input. Please enter valid numeric values.");
+				scanner.nextLine();
+			} catch (IllegalArgumentException e) {
+				System.out.println("Error: " + e.getMessage());
+			}
+		}
+
+	}
+
+	protected static int generateOTP() {
+		Random random = new Random();
+		return random.nextInt(1000, 9999);
+	}
+
+	protected static void manageMobileNumber(Scanner scanner, List<Customer> customers) {
+		Customer customer = getCustomerByAccountNumber(scanner, customers);
+
+		if (customer == null) {
+			System.out.println("\n\t** Customer not found. Returning to the Main Menu. **");
+			return;
+		}
+
+		System.out.println("\n\t-- Name and Mobile Number Of Customer : " + customer.getFullName() + " - "
+				+ customer.getMobileNumber() + " --");
+
+		while (true) {
+			System.out.println("\n\t\t\t ----- Mobile Options ------\n");
+
+			System.out.println(
+					"\t0.Go Back to User Menu \t10.Go Back to The Main Menu\n\n\t1.Update Mobile Number  2.Change Mobile Number  3.Display Mobile Number");
+			System.out.print("\n-> Enter your choice : ");
+
+			try {
+				int choice = scanner.nextInt();
+
+				switch (choice) {
+				case 0:
+					System.out.println("\n<-- Back to User Menu.");
+					handleExistingUser(scanner, customers);
+					break;
+
+				case 10:
+					System.out.println("\n\t<--- Back to the Main Menu.");
+					displayMainMenu();
+					break;
+
+				case 1:
+					System.out.println("\n\t\t----- Update Mobile Number -----");
+					customer.updateMobileNumber(scanner, customers);
+					break;
+
+				case 2:
+					System.out.println("\n\t\t----- Change Mobile Number -----");
+					customer.changeMobileNumber(scanner, customers);
+					break;
+
+				case 3:
+					System.out.println("\n\t-- Mobile Number & Name : " + customer.getMobileNumber() + "-"
+							+ customer.getFullName() + " --");
+					break;
+
+				default:
+					System.out.println("\n\t** Invalid choice. Please enter a valid option. **");
+				}
+			} catch (Exception e) {
+				System.out.println("\n\t** An error occurred: " + e.getMessage() + ". Please try again. **");
+			}
+		}
+	}
+	
+	
+	
+ protected static Customer findCustomerByAccountNumber(List<Customer> customers, long accountNumber) {
+	    for (Customer customer : customers) {
+	        if (customer.getAccountNumber() == accountNumber) {
+	            return customer;
+	        }
+	    }
+	    return null;
+	}
+ protected static Customer findCustomerByFullName(List<Customer> customers, String fullName) {
+	    for (Customer customer : customers) {
+	        if (customer.getFullName().equalsIgnoreCase(fullName)) {
+	            return customer;
+	        }
+	    }
+	    return null;
+	}
+
+  private static Customer getCustomerByAccountNumber(Scanner scanner, List<Customer> customers, String role) {
+        while (true) {
+            System.out.print("\n-> Enter the " + role + "'s account number (0 for Cancel) : ");
+            long accountNumber = scanner.nextLong();
+
+            if (accountNumber == 0) {
+                System.out.println("\n<-- Back to User Menu.");
+                return null;
+            }
+
+            Customer customer = findCustomerByAccountNumber(customers, accountNumber);
+            if (customer != null) {
+                return customer;
+            } else {
+                System.out.println("Invalid " + role.toLowerCase() + " account number. Please enter a valid account number.");
+            }
+        }
+    }
+
+
+  private static long getValidAccountNumber(Scanner scanner, List<Customer> customers, String role) {
+	    while (true) {
+	        System.out.print("\n-> Enter the " + role + "'s account number (0 for Cancel) : ");
+	        long accountNumber = scanner.nextLong();
+	        if (accountNumber == 0) {
+	            return 0;
+	        }
+	        return accountNumber;
+	    }
+	}
+
+
+    private static double getValidTransferAmount(Scanner scanner) {
+        System.out.print("\n-> Enter the amount to transfer (0 for Cancel) : ");
+        return scanner.nextDouble();
+    }
+
+	public static void performTransfer(List<Customer> customers) {
+        Scanner scanner = new Scanner(System.in);
+
+        System.out.println("\n\t\t-- Transfer Money --");
+
+        Customer senderCustomer = getCustomerByAccountNumber(scanner, customers, "Sender");
+	 
+        if (senderCustomer == null) {
+        System.out.println("\n<-- Back to User Menu.");
+        handleExistingUser(scanner, customers);
+        return;
+      }
+        
+        System.out.println("\n\t---- Sender's Name: " + senderCustomer.getFullName());
+
+        if (senderCustomer.equals(0)) {
+            System.out.println("\n<-- Back to User Menus");
+            handleExistingUser(scanner, customers);
+            return;
+        }
+        
+        else if (senderCustomer == null) {
+            System.out.println("Invalid sender account number. Transfer aborted.");
+            return;
+        }
+         
+        long receiverAccountNumber = getValidAccountNumber(scanner, customers, "Receiver");
+        if (receiverAccountNumber == 0) {
+            System.out.println("\n<-- Back to User Menu.");
+            handleExistingUser(scanner, customers);
+            return;
+        }
+
+        Customer receiverCustomer = findCustomerByAccountNumber(customers, receiverAccountNumber);
+        if (receiverCustomer == null) {
+            System.out.println("Invalid receiver account number. Please enter a valid account number.");
+            return;
+        }
+
+        System.out.println("\n\t---- Receiver's Name: " + receiverCustomer.getFullName());
+
+        double transferAmount = getValidTransferAmount(scanner);
+        if (transferAmount == 0) {
+            System.out.println("\n<-- Back to User Menu.");
+            handleExistingUser(scanner, customers);
+            return;
+        }
+
+        try {
+            transferTo(senderCustomer, receiverCustomer, transferAmount);
+
+        } catch (InsufficientResourcesException e) {
+            System.out.println("Insufficient balance. Transfer failed.");
+        }
+    }
+	
+	
+    public static void transferTo(Customer sender, Customer receiver, double amount) {
+        try {
+            if (amount <= 0) {
+                throw new InvalidAmountException("Invalid transfer amount. Please enter a positive amount.");
+            }
+
+            if (sender.getBalance() < amount) {
+                throw new InsufficientResourcesException("Insufficient funds to complete the transfer.");
+            }
+
+            Transaction debitTransaction = new Transaction("Debited", amount,"Debited" );
+            Transaction creditTransaction = new Transaction("Credited", amount,"Credited");
+
+            sender.withdraw(amount, "Debited");
+            receiver.addAmount(amount, "Credited");
+
+            System.out.println("\n\t\t------ " + amount + " Rs Transferred Successfully. ------");
+            System.out.println("\n-- Transfer of " + amount + " Rs from " + sender.getFullName() +
+                    "'s account number " + sender.getAccountNumber() + "\n to " + receiver.getFullName() +
+                    "'s account number " + receiver.getAccountNumber() + " successfully. --\n");
+            System.out.println("- Amount transferred     : " + amount);
+            System.out.println("- Sender                 : " + sender.getFullName());
+            System.out.println("- Sender account number  : " + sender.getAccountNumber());
+            System.out.println("- Receiver               : " + receiver.getFullName());
+            System.out.println("- Receiver account number: " + receiver.getAccountNumber());
+        } catch (InvalidAmountException | InsufficientResourcesException e) {
+            System.out.println(e.getMessage());
+        } catch (Exception e) {
+            System.out.println("An unexpected error occurred: " + e.getMessage());
+        }
+    }
+
+
+	static class InsufficientResourcesException extends RuntimeException {
+        public InsufficientResourcesException(String message) {
+            super(message);
+        }
+    }
+
+    static class InvalidAmountException extends RuntimeException {
+        public InvalidAmountException(String message) {
+            super(message);
+        }
+    }
+	    
+
+	protected static Customer getCustomerByAccountNumber(Scanner scanner, List<Customer> customers) {
+		Customer customer = null;
+
+		while (true) {
+			try {
+				System.out.print("\n-> Enter Account Number (enter '0' to go back) : ");
+				String input = scanner.next();
+
+				if (input.equalsIgnoreCase("0")) {
+					System.out.println("\n<--- Back to the User menu.");
+					handleExistingUser(scanner, customers);
+					break;
+				}
+
+				long accountNumber = Long.parseLong(input);
+				if (accountNumber < 0) {
+					System.out.println("Account number cannot be negative. Please enter a valid account number.");
+					continue;
+				}
+
+				customer = findCustomerByAccountNumber(customers, accountNumber);
+
+				if (customer != null) {
+					break;
+				} else {
+					System.out.println("Account not found. Please check the account number.");
+				}
+			} catch (NumberFormatException e) {
+				System.out.println("Invalid input. Please enter a valid numeric account number.");
+				scanner.nextLine();
+			}
+		}
+		return customer;
+	}
+
+	protected static Customer findCustomerByAtmPin(Scanner scanner, List<Customer> customers) {
+		try {
+			System.out.print("-> Enter ATM Pin : ");
+			int enteredPin = scanner.nextInt();
+
+			for (Customer customer : customers) {
+				if (customer.getAtmPin() == enteredPin) {
+					return customer;
+				}
+			}
+
+			System.out.println("*** No customer found with the provided ATM pin. ***");
+		} catch (InputMismatchException e) {
+			System.out.println("Invalid input. Please enter a valid ATM Pin.");
+			scanner.nextLine();
+		}
+
+		return null;
+	}
+
+// ---------------------------------- Admin Menu Ends Here ---------------------------------
+
+	protected static void handleAdmin(Scanner scanner, List<Customer> customers) {
+		int count = 0;
+		while (true) {
+			try {
+				System.out.println("\n\t\t----------- Login to --------------");
+				System.out.println("\t\t---Enter UserName and Password ---\n");
+				System.out.println("\t\t-- 0.For Main Menu --\n");
+
+				System.out.print("-> Enter User Name : ");
+				String userName = scanner.nextLine();
+
+				if (userName.equals("0")) {
+					System.out.println("<-- Back to the Main Menu");
+					break;
+				} else if (userName.isEmpty()) {
+					System.out.println("Username cannot be empty. Please try again.");
+					continue;
+				}
+
+				System.out.print("-> Enter Password  : ");
+				String password = scanner.nextLine();
+
+				if (password.equals("0")) {
+					System.out.println("<-- Back to the Main Menu");
+					break;
+				} else if (userName.equalsIgnoreCase("MyBank") && password.equals("MyBank@2023")) {
+					handleAdminOptions(scanner, customers);
+					break;
+				} else if (count < 3) {
+					count++;
+					System.out.println("Invalid username or password. Access denied. \n\t Uses " + count
+							+ "/3 Remaining Times " + (3 - count));
+				} else {
+					System.out.println("\n\t You Reached Maximum Times. Contact Technical Team");
+					break;
+				}
+			} catch (InputMismatchException e) {
+				System.out.println("Invalid input. Please enter a valid username.");
+				// scanner.nextLine();
+			} catch (Exception e) {
+				System.out.println("An error occurred: " + e.getMessage());
+				// scanner.nextLine();
+			}
+		}
+	}
+
+	protected static void handleAdminOptions(Scanner scanner, List<Customer> customers2) {
+
+		while (true) {
+			try {
+				System.out.println("\n\t\t ---- Admin Menu ----\n");
+				System.out.println("0. Main Menu (Home)");
+				System.out.println("1. All Customers Details");
+				System.out.println("2. Transcation Menu");
+				System.out.println("3. Total Accounts in Bank");
+				System.out.println("4. Search Customer");
+
+				System.out.print("\n-> Select an option : ");
+				int adminOption = scanner.nextInt();
+
+				if (adminOption == 0) {
+					System.out.println("<-- Going back to the main menu.");
+					displayMainMenu();
+					break;
+				} else if (adminOption == 1) {
+					System.out.println("\n\t\t\t ---- Total Customers Details ----");
+					displayCustomerDetails(customers);
+
+				} else if (adminOption == 2) {
+					List<Transaction>  transactions = null;
+					Bank.transcationMainMenu(customers,transactions);
+				} else if (adminOption == 3) {
+					displayTotalAccountsInBank(customers);
+				} else if (adminOption == 4) {
+					searchCustomer(scanner, customers);
+				} else {
+					System.out.println("Invalid option.");
+				}
+			} catch (Exception e) {
+				System.out.println("-- Input Invalid.");
+				scanner.nextLine();
+			}
+		}
+	}
+
+	private static void displayCustomerDetails(List<Customer> customers) {
+		
+		System.out.println("\n- Total Customers in Bank : " + customers.size());
+
+		for (Customer customer : customers) {
+
+			System.out.println("\n- Account Number \t: " + customer.getAccountNumber() + "\n- Holder Name \t \t: "
+					+ customer.getFullName() + "\n- Mobile Number \t: " + customer.getMobileNumber()
+					+ "\n- Date Of Birth \t: " + customer.getDob()+"\n- Atm Pin\t\t: " + customer.getAtmPin()
+					+ "\n- Account Opened Date   : " + customer.getAccountOpenDate() + "\n- Balance   \t\t: "
+					+ customer.getBalance());
+
+			System.out.println("\n\t-----------------------------------------------------");
+		}
+	}
+	
+	public static class Transaction {
+	    private static int totalTransactions;
+	    private String string;
+		protected double amount;
+		protected com.sai.Wate.BankApplication.TransactionType type;
+		private double d;
+		private TransactionType add;
+	   String transactionType;
+		private static int size;
+	    private long accountNumber;
+		public Object TransactionType ;
+		public Object Time;
+		public Object Date;
+		public Date DateTime;
+		private String time;
+		private String ttype;
+
+
+		public Transaction(String string, double amount,String transactionType) {
+			this.string = string;
+			this.amount = amount;
+	        this.transactionType = transactionType;
+			this.type = type;
+			this.size = size;		}
+
+		public Transaction(double d, TransactionType add) {
+			this.d =d;
+			this.add =add;
+		}
+		
+		public Transaction(Customer date2, String time, String ttype, double amount) {
+	        this.Date = date2;
+	        this.time = time;
+	        this.ttype = ttype;
+	        this.amount = amount;
+	    }
+		
+		public static List<String> getTransactionTypes() {
+	        List<String> transactionTypes = new ArrayList<>();
+	        transactionTypes.add("CREDITED");
+	        transactionTypes.add("DEBITED");
+	        transactionTypes.add("WITHDRAW");
+	        transactionTypes.add("ADD");
+
+	        return transactionTypes;
+	    }
+        
+		public double getD() {
+			return d;
+		}
+
+		public void setD(double d) {
+			this.d = d;
+		}
+
+		public TransactionType getAdd() {
+			return add;
+		}
+
+		public void setAdd(TransactionType add) {
+			this.add = add;
+		}
+
+		public String getString() {
+			return string;
+		}
+
+
+		public void setString(String string) {
+			this.string = string;
+		}
+
+
+		public static int getSize() {
+			return size;
+		}
+
+
+		public static void setSize(int size) {
+			Transaction.size = size;
+		}
+
+
+		public static void setTotalTransactions(int totalTransactions) {
+			Transaction.totalTransactions = totalTransactions;
+		}
+
+
+		public double getAmount() {
+			return amount;
+		}
+
+		public void setAmount(double amount) {
+			this.amount = amount;
+		}
+
+		public TransactionType getType() {
+			return type;
+		}
+
+		public void setType(TransactionType type) {
+			this.type = type;
+		}
+
+		public Date getDateTime() {
+			return DateTime;
+		}
+		
+		public static int getTotalTransactions() {
+	        return totalTransactions;
+	    }
+
+		public static int size() {
+			return size;
+		}
+
+		public Object getDate() {
+			return Date;
+		}
+
+		public Object getTime() {
+			return Time;
+		}
+
+		public Object getTransactionType() {
+			return transactionType; 
+		}
+
+		public long getAccountNumber() {
+			return accountNumber;
+		}
+	}
+	
+	public String toString() {
+        Object date = null ;
+		Object time = null;
+		Object type = null;
+		Object amount = null;
+		return String.format("%s\t%s\t%s\t%.2f", date, time, type, amount);
+    }
+
+	enum TransactionType {
+		WITHDRAW, ADD
+	}
+
+	protected static void displayTotalBankTransaction(List<Customer> customers) {
+		double totalTransaction = 0;
+		double totalWithdrawal = 0;
+		double totalAdd = 0;
+
+		for (Customer customer : customers) {
+			for (Transaction transaction : customer.getTransactionsBank()) {
+				totalTransaction += transaction.getAmount();
+
+				if (transaction.getType() == TransactionType.WITHDRAW) {
+					totalWithdrawal += transaction.getAmount();
+				} else if (transaction.getType() == TransactionType.ADD) {
+					totalAdd += transaction.getAmount();
+				}
+			}
+		}
+
+		System.out.println("Total Bank Transaction: " + totalTransaction);
+		System.out.println("Total Withdrawal: " + totalWithdrawal);
+		System.out.println("Total Add: " + totalAdd);
+	}
+
+	protected static void displayTotalAccountsInBank(List<Customer> customers) {
+		System.out.println("\n\t- Total Accounts in Bank : " + customers.size());
+	}
+
+	protected static void searchCustomer(Scanner scanner, List<Customer> customers) {
+
+		while (true) {
+			try {
+				System.out.println("\n\t\t\t---- Search Customer ----");
+				System.out.println(
+						"\n\t\t\t0.Back\t\t10.Main Menu \n\n\t1.Search With Name\t2.Search With Account Number\t3.Search With Mobile Number\n");
+
+				System.out.print("-> Enter an option : ");
+				int search = scanner.nextInt();
+
+				if (search == 0) {
+					System.out.println("<-- Back ");
+					break;
+				}
+
+				else if (search == 10) {
+					displayMainMenu();
+					System.out.println("\n<-- Back to The Main Menu");
+					break;
+				}
+
+				else if (search == 1) {
+					System.out.println("\n\t\t ---- Search With Name ----\n");
+					System.out.print("-> Enter the name to search for : ");
+					scanner.nextLine();
+					String searchName = scanner.nextLine();
+					boolean found = false;
+
+					for (Customer customer : customers) {
+						if (customer.getFullName().equalsIgnoreCase(searchName)
+								|| customer.getFullName().contains(searchName)) {
+							customer.displayDetails();
+							found = true;
+						}
+					}
+					if (!found) {
+						System.out.println("Customer not found with the given name.");
+					}
+				} else if (search == 2) {
+					System.out.println("\n\t\t ---- Search With Account Number ----\n");
+
+					System.out.print("-> Enter the account number to search for : ");
+					long searchAccountNumber = scanner.nextLong();
+					Customer foundCustomer = findCustomerByAccountNumber(customers, searchAccountNumber);
+
+					if (foundCustomer != null) {
+						foundCustomer.displayDetails();
+					} else {
+						System.out.println("Customer not found with the given account number.");
+					}
+				} else if (search == 3) {
+					scanner.nextLine();
+					System.out.println("\n\t\t --- Search With Mobile Number ---\n");
+					System.out.print("-> Enter the mobile number to search for : ");
+					String searchMobileNumber = scanner.nextLine().trim();
+
+					boolean found = false;
+					for (Customer customer : customers) {
+						if (customer.getMobileNumber().equals(searchMobileNumber)) {
+							customer.displayDetails();
+							found = true;
+						}
+					}
+
+					if (!found) {
+						System.out.println("\t** Customer not found with the given mobile number. **");
+					}
+				} else {
+					System.out.println("Invalid search option.");
+				}
+			} catch (InputMismatchException e) {
+				System.out.println("Invalid input. Please enter a valid option.");
+				scanner.nextLine();
+			} catch (Exception e) {
+				System.out.println("An error occurred: " + e.getMessage());
+			}
+		}
+	}
+
+	protected static List<Customer> searchByName(List<Customer> customers, String name) {
+		List<Customer> result = new ArrayList<>();
+
+		for (Customer customer : customers) {
+			if (customer.getFullName().toUpperCase().contains(name)) {
+				result.add(customer);
+			}
+		}
+
+		return result;
+	}
+
+	protected static Customer searchByAccountNumber(List<Customer> customers, long accountNumber) {
+		for (Customer customer : customers) {
+			if (customer.getAccountNumber() == accountNumber) {
+				return customer;
+			}
+		}
+		return null;
+	}
+
+	protected static Customer searchByMobileNumber(List<Customer> customers, long mobileNumber) {
+		for (Customer customer : customers) {
+			if (Long.valueOf(mobileNumber).equals(customer.getMobileNumber())) {
+				return customer;
+			}
+		}
+		return null;
+	}
+
+	public static void transcationDisplay() {
+		
+	}
+}
+
+class Customer {
+	private long accountNumber;
+	protected String fullName;
+	protected String mobileNumber;
+	protected String dob;
+	protected String accountOpenDate;
+	protected int atmPin;
+	protected double balance;
+	protected static int transactionCount;
+    double currentAmount;
+
+	protected List<Transaction> transactions = new ArrayList<>();
+
+	public Customer(long accountNumber, String fullName, String mobileNumber, String dob, String accountOpenDate,
+			int atmPin, double initialAmount,int transactionCount) {
+		this.accountNumber = accountNumber;
+		this.fullName = fullName;
+		this.mobileNumber = mobileNumber;
+		this.dob = dob;
+		this.accountOpenDate = accountOpenDate;
+		this.atmPin = atmPin;
+		this.balance = initialAmount;
+		Customer.transactionCount = transactionCount;
+	}
+
+	public Customer(List<com.sai.Wate.BankApplication.Transaction> transactions2) {
+	}
+
+	public int getTransactionCount() {
+		return transactionCount;
+	}
+
+	public  void setTransactionCount(int transactionCount) {
+		Customer.transactionCount = transactionCount;
+	}
+
+	public void setFullName(String fullName) {
+		this.fullName = fullName;
+	}
+
+	public void setMobileNumber(String mobileNumber) {
+		this.mobileNumber = mobileNumber;
+	}
+
+	public void setDob(String dob) {
+		this.dob = dob;
+	}
+
+	public void setAccountOpenDate(String accountOpenDate) {
+		this.accountOpenDate = accountOpenDate;
+	}
+
+	public void setAtmPin(int atmPin) {
+		this.atmPin = atmPin;
+	}
+
+	public void setTransactions(List<Transaction> transactions) {
+		this.transactions = transactions;
+	}
+
+	
+	public BankApplication.Transaction[] getTransactionsBank() {
+		return null;
+	}
+
+	public long getAccountNumber() {
+		return accountNumber;
+	}
+
+	public String getFullName() {
+		return fullName;
+	}
+
+	public String getMobileNumber() {
+		return mobileNumber;
+	}
+
+	public String getDob() {
+		return dob;
+	}
+
+	public String getAccountOpenDate() {
+		return accountOpenDate;
+	}
+
+	public int getAtmPin() {
+		return atmPin;
+	}
+
+	public double getBalance() {
+		return balance;
+	}
+
+	public List<Transaction> getTransactions() {
+		return transactions;
+	}
+
+	public void miniStatement() {
+        if (transactions == null || transactions.isEmpty()) {
+            System.out.println("No transactions available.");
+            return;
+        }
+
+        System.out.println("\n-- Mini Statement for Account Number: " + accountNumber + " - " + fullName + " - "
+                + transactionCount + " (No.of Transactions)");
+        System.out.println("\n Date\t\tTime\t\tType\t\tAmount\t\tTransaction ID\n ----\t\t----\t\t----\t\t-----\t\t--------------");
+
+        int count = 1;
+        for (Transaction transaction : transactions) {
+          //  String transactionId = generateTransactionId(transaction.getType());
+            String transactionId = generateTransactionId(transaction.getType(),accountNumber,fullName);
+            System.out.printf("%s\t%s\t%s\t%.2f\t\t%s%n",
+                    transaction.getDate().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy")),
+                    transaction.getDate().format(java.time.format.DateTimeFormatter.ofPattern("HH:mm:ss")),
+                    transaction.getType(), transaction.getAmount(), transactionId);
+
+           // printTransactionId(count++);
+        }
+
+        System.out.println("\n  \t\t\t  Current Amount :   " + this.getBalance() + "\n\t\t\t");
+    }
+    public static void printTransactionId(int count) {
+        System.out.print("     " + count + "\t\t");
+    }
+    
+    public static String generateTransactionId(String transactionType, long accountNumber2, String fullName) {
+        int transactionCounter = 0;
+     String transactionCode  ;
+
+        
+        if (transactionType.equals("Withdraw")) {
+        	transactionCode = "W";
+            String accountCode = String.valueOf(accountNumber2).substring(0, Math.min(String.valueOf(accountNumber2).length(), 3)).toUpperCase();
+            String fullNameCode = fullName.substring(0, Math.min(fullName.length(), 3)).toUpperCase();
+            String dateStr = LocalDateTime.now().format(DateTimeFormatter.ofPattern("ddMMyy"));
+			return   fullNameCode+ accountCode + dateStr + transactionCode + ++transactionCounter;
+
+        } else if (transactionType.equals("Add")) {
+            transactionCode = "A";
+            String accountCode = String.valueOf(accountNumber2).substring(0, Math.min(String.valueOf(accountNumber2).length(), 3)).toUpperCase();
+            String fullNameCode = fullName.substring(0, Math.min(fullName.length(), 3)).toUpperCase();
+            String dateStr = LocalDateTime.now().format(DateTimeFormatter.ofPattern("ddMMyy"));
+			return   fullNameCode+ accountCode + dateStr + transactionCode + ++transactionCounter;
+        } else if (transactionType.equals("Debited")) {
+            transactionCode = "D";
+        } else if (transactionType.equals("Credited")) {
+            transactionCode = "C";
+        }
+        
+        
+         transactionCode = "" ;
+
+        
+        String accountCode = String.valueOf(accountNumber2).substring(0, Math.min(String.valueOf(accountNumber2).length(), 3)).toUpperCase();
+        String fullNameCode = fullName.substring(0, Math.min(fullName.length(), 3)).toUpperCase();
+        String dateStr = LocalDateTime.now().format(DateTimeFormatter.ofPattern("ddMMyy"));
+
+      
+        return   fullNameCode+ accountCode + dateStr + transactionCode + ++transactionCounter;
+    }
+
+    
+	public void addTransaction(String type, double amount) {
+		Transaction transaction = new Transaction(type, amount);
+		transactions.add(transaction);
+	}
+
+	public void withdraw(double amount, String transactionType) {
+	    if (amount > 0 && balance >= amount && transactionType.equalsIgnoreCase("Debited") ) {
+	        balance -= amount;
+	        Transaction transaction = new Transaction("Debited    -", amount);
+	        transactions.add(transaction);
+	        transactionCount++;
+	        System.out.println("\n-- Debited of " + amount + " Rs successful. --");
+	    } else if (amount > 0 && balance >= amount && transactionType.equalsIgnoreCase("Withdraw")) {
+	        balance -= amount;
+	        Transaction transaction = new Transaction("Withdraw   -", amount);
+	        transactions.add(transaction);
+	        transactionCount++;
+	        System.out.println("\n-- Withdraw of " + amount + " Rs successful. --");
+	    } else {
+	        System.out.println("Withdrawal failed. Insufficient balance or invalid amount.");
+	    }
+	}
+
+	public void addAmount(double amount, String transactionType) {
+	    if (amount > 0 && transactionType.equalsIgnoreCase("Credited") ) {
+	        balance += amount;
+	        Transaction transaction = new Transaction("Credited   -",amount);
+	        transactions.add(transaction);
+	        transactionCount++;
+	        System.out.println("\n-- Amount of " + amount + " Credited successfully. --");
+	    } else if (amount > 0 && transactionType.equalsIgnoreCase("Add")) {
+	        balance += amount;
+	        Transaction transaction = new Transaction("Add        -", amount);
+	        transactions.add(transaction);
+	        transactionCount++;
+	        System.out.println("\n-- Amount of " + amount + " added successfully. --");
+	    } else {
+	        System.out.println("Invalid amount.");
+	    }
+	}
+	
+	public void changePin(int newPin) {
+		if (newPin >= 1000 && newPin <= 9999) {
+			atmPin = newPin;
+			System.out.println("\n\tATM Pin changed successfully.");
+		} else {
+			System.out.println("Invalid ATM Pin. Please enter a 4-digit PIN.");
+		}
+	}
+
+	public void updateMobileNumber(Scanner scanner,List<Customer> customers) {
+		String newMobileNumber;
+		do {
+			System.out.print("\n-> Enter Mobile No For Updation (10 digits) : ");
+			// scanner.next();
+			newMobileNumber = scanner.next();
+			newMobileNumber = newMobileNumber.replaceAll("[^0-9]", "");
+
+			if (newMobileNumber.length() != 10 && newMobileNumber.length() <1) {
+				System.out.println("\n\t\t** You Entered " + newMobileNumber.length() + " Digits.**");
+				System.out.println("\n\t\t!Note: Please Enter 10 digits Of Mobile number.\n");
+			}else if (newMobileNumber.length()== 0 && newMobileNumber.equals("0")) {
+                System.out.println("\n<-- Back to Mobile Management");
+              BankApplication.manageMobileNumber(scanner, customers);
+                return; 
+            }
+				else {
+				if (!newMobileNumber.equals(this.mobileNumber)) {
+					System.out.println("\n\t** Your Entered Mobile Number Doesn't Match with Your Account.**\n");
+					return;
+				}
+			}
+		} while (newMobileNumber.length() != 10);
+
+		int otp = generateOTP();
+		System.out.println("Your OTP Number For Verification: " + otp);
+
+		int enterOtp;
+		do {
+			System.out.print("\n-> Enter Your OTP Number For Verification : ");
+			try {
+				enterOtp = Integer.parseInt(scanner.nextLine());
+
+				if (otp != enterOtp) {
+					System.out.println("\n\t** Your Entered OTP Is Wrong.**\n");
+				}
+			} catch (NumberFormatException e) {
+				System.out.println("\n\t** Invalid OTP. Please enter a valid numeric OTP.**\n");
+				enterOtp = -1;
+			}
+		} while (otp != enterOtp);
+
+		System.out.println("Entered OTP Valid. \nYour Mobile Number Verified Successfully.");
+	}
+
+	public void changeMobileNumber(Scanner scanner, List<Customer> customers) {
+	    String newMobileNumber;
+	    do {
+	        System.out.print("\n-> Enter New Mobile No (10 digits) : ");
+	        newMobileNumber = scanner.next();
+	        newMobileNumber = newMobileNumber.replaceAll("[^0-9]", "");
+
+	        if (newMobileNumber.length() != 10  && newMobileNumber.length() <1 ) {
+	            System.out.println("\n\t\t** You Entered " + newMobileNumber.length() + " Digits.**");
+	            System.out.println("\n\t\t!Note: Please Enter 10 digits Of Mobile number.\n");
+	        } else if ("0".equals(newMobileNumber)) {
+	            System.out.println("\n<-- Back to Mobile Management");
+	           BankApplication.manageMobileNumber(scanner, customers);
+	            return;
+	        } else if (newMobileNumber.length() == 10) {
+	        }
+	    } while (newMobileNumber.length() != 10);
+	
+		int otp = generateOTP();
+		int enterOtp;
+		boolean validInput = false;
+
+		System.out.print("\n->Your OTP Number For Verification : " + otp);
+
+		do {
+			try {
+				System.out.print("\n-> Enter Your OTP Number For Verification : ");
+				enterOtp = Integer.parseInt(scanner.nextLine());
+
+				if (otp != enterOtp) {
+					System.out.println("\n\t** Your Entered OTP Is Wrong.**\n");
+				} else {
+					validInput = true;
+				}
+			} catch (NumberFormatException e) {
+				System.out.println("\n\t** Invalid OTP. Please enter a valid numeric OTP.**\n");
+			}
+		} while (!validInput);
+
+		System.out.println("Entered OTP Correct. \nYour Mobile Number Changed Successfully.");
+		this.mobileNumber = newMobileNumber;
+	}
+
+	protected int generateOTP() {
+		Random random = new Random();
+		return random.nextInt(1000, 9999);
+	}
+
+	private   void checkBalanceWithAccountNumber(Scanner scanner, List<Customer> customers) {
+		while (true) {
+			try {
+				Customer customer = findCustomerByAccountNumber(customers, accountNumber);
+
+				if (customer != null) {
+					System.out.println("\n\t\t\t\t | ----- Holder Name ----- |");
+					System.out.println("\t\t\t\t | " + customer.getFullName() + " |");
+					System.out.println("\n\t\t\t\t --- account balance : " + customer.getBalance() + " ---\n");
+					break;
+				} else {
+					System.out.println("Account not found. Please check the account number.");
+					break;
+				}
+			} catch (NumberFormatException e) {
+				System.out.println("\n\t** Invalid account number. Please enter a valid numeric account number.**\n");
+				break;
+			}
+		}
+	}
+
+	
+	private static Customer findCustomerByAccountNumber(List<Customer> customers, long accountNumber) {
+		return null;
+	}
+
+	public void checkBalanceWithPin(Scanner scanner) {
+		try {
+			System.out.println("\n\t\t\t\t | ----- Holder Name ----- |");
+			System.out.println("\t\t\t\t | " + this.getFullName() + " |");
+			System.out.println("\n\t\t\t\t --- account balance: " + this.getBalance() + " ---\n");
+		} catch (Exception e) {
+			System.out.println("An error occurred: " + e.getMessage());
+		}
+	}
+
+	public boolean isCorrectPin(int enteredPin) {
+		return this.atmPin == enteredPin;
+	}
+
+	protected static Customer findCustomerByAtmPin(List<Customer> customers, int enteredPin) {
+		for (Customer customer : customers) {
+			if (customer.getAtmPin() == enteredPin) {
+				return customer;
+			}
+		}
+		return null;
+	}
+	
+	public  void transcationDisplay() {
+        if (transactions == null || transactions.isEmpty()) {
+            System.out.println("No transactions available.");
+            return;
+        }
+
+        int Total_Count = 0;
+        System.out.println("\n-- Transcations Of Account Number : " + accountNumber + " - " + fullName + " - " +
+        		transactions.size()+ " (No.of Transactions) " );
+        System.out.println("\n Transaction\t  Date\t\t Time\t\t Type\t\t Amount\n     ID \n--------------\t  ----\t\t ----\t\t ----\t\t -----");
+
+        int count = 1;
+
+        for (Transaction transaction : transactions) {
+              printTransactionId(count);
+            System.out.printf("%s\t%s\t%s\t%.2f%n",
+                    transaction.getDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")),
+                    transaction.getDate().format(DateTimeFormatter.ofPattern("HH:mm:ss")),
+                    transaction.getType(),
+                    transaction.getAmount());
+            count++;
+            Total_Count = count; 
+        }
+        System.out.print("\n\t\t\t\t\t\tCurrent Amount : " + balance + "\n\n");
+    }
+	
+	protected void displayTotalTranscationsInBank(List<Customer> customers) {
+		System.out.println("\n\t- Total Transcations In a Bank : " +transactionCount +"-");
+	}
+
+	public void displayDetails() {
+		System.out.println("\n\t\t --- Customer Details ----\n");
+		System.out.println("-Account Number     : " + accountNumber );
+		System.out.println("-Full Name          : " + fullName);
+		System.out.println("-Mobile Number      : " + mobileNumber);
+		System.out.println("-Date of Birth      : " + dob);
+		System.out.println("-Account Open Date  : " + accountOpenDate);
+		System.out.println("-Balance            : " + balance);
+	}
+
+	class Transaction {
+		private LocalDateTime date;
+		protected String type;
+		protected double amount;
+		private String transactionType;	
+
+
+		public Transaction(String type, double amount) {
+			this.date   = LocalDateTime.now();
+			this.type   = type;
+			this.amount = amount;
+	        this.transactionType = transactionType;
+
+		}
+		
+		public Transaction(String date, String time, String transactionType, double amount) {
+	       // this.date = date;
+	      //  this.time = time;
+	        this.transactionType = transactionType;
+	        this.amount = amount;
+	    }
+		
+		public LocalDateTime getDate() {
+			return date;
+		}
+
+		public String getType() {
+			return type;
+		}
+
+		public double getAmount() {
+			return amount;
+		}
+		
+		 public String getTransactionType() {
+		        return transactionType;
+		    }
+
+	}
+
+	public String getDateOfBirth() {
+		return null;
+	}
+
+	public void displayTranscation(String enteredTransactionType) {
+		
+	}
+
+	public boolean hasTransactionType(String transactionType) {
+		return false;
+	}
+
+}	

@@ -1,0 +1,401 @@
+package com.sai.Wate;
+
+import java.text.DecimalFormat;
+import java.text.ParsePosition;
+import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.InputMismatchException;
+import java.util.List;
+import java.util.Optional;
+import java.util.Scanner;
+
+enum TransactionType {
+	ADD, WITHDRAW
+}
+
+class Transaction {
+	private double amount;
+	private TransactionType type;
+	private Date dateTime;
+	private String string;
+	private String date;
+	private String time;
+	private String transactionType;
+	private static List<Transaction> transactions = null;
+	private static List<Transaction> transactions1 = null;
+	private static List<Transaction> initializeTransactions;
+
+	public String getString() {
+		return string;
+	}
+
+	public List<Transaction> getTransactions() {
+		return transactions;
+	}
+
+	public List<Transaction> getTransactions1() {
+		return transactions1;
+	}
+
+	public static List<Transaction> getInitializeTransactions() {
+		return initializeTransactions;
+	}
+
+	public Transaction(String string, double amount) {
+		this.string = string;
+		this.type = type;
+		this.amount = amount;
+		this.dateTime = new Date();
+	}
+
+	public Transaction(String date, String time, String transactionType, double amount) {
+		this.date = date;
+		this.time = time;
+		this.transactionType = transactionType;
+		this.type = type;
+		this.amount = amount;
+	}
+
+	public String getDate() {
+		return date;
+	}
+
+	public String getTime() {
+		return time;
+	}
+
+	public String getTransactionType() {
+		return transactionType;
+	}
+
+	public double getAmount() {
+		return amount;
+	}
+
+	public TransactionType getType() {
+		return type;
+	}
+
+	public Date getDateTime() {
+		return dateTime;
+	}
+
+	public static void Customer(List<Transaction> transactions) {
+		transactions = transactions;
+	}
+
+	public List<Transaction> getTransactionsBank() {
+		return transactions1;
+	}
+
+	public void Customer1(List<Transaction> transactions1) {
+		this.transactions1 = transactions1;
+	}
+	
+	
+	
+
+	class Bank extends BankApplication {
+		private static Scanner scanner = new Scanner(System.in);
+		private static List<Customer> customers;
+
+		public static void main(String[] args) {
+			customers = initializeCustomers();
+			List<Transaction> transactions = initializeTransactions();
+			transcationMainMenu(customers, transactions);
+
+		}
+
+		private static List<Transaction> initializeTransactions() {
+
+			List<Transaction> transactions = new ArrayList<>();
+
+			List<Transaction> transactions1 = new ArrayList<>();
+			transactions1.add(new Transaction(500.0, TransactionType.ADD));
+			transactions1.add(new Transaction(300.0, TransactionType.WITHDRAW));
+
+			List<Transaction> transactions2 = new ArrayList<>();
+			transactions2.add(new Transaction(200.0, TransactionType.ADD));
+			transactions2.add(new Transaction(100.0, TransactionType.WITHDRAW));
+			transactions2.add(new Transaction(75.0, TransactionType.WITHDRAW));
+
+			return transactions;
+		}
+
+		private static List<Customer> initializeCustomers() {
+			List<Customer> customers = new ArrayList<>();
+			List<Transaction> transactions1 = initializeTransactions();
+			customers.add(new Customer(transactions1));
+			List<Transaction> transactions2 = initializeTransactions();
+			customers.add(new Customer(transactions2));
+
+			return customers;
+		}
+
+		protected static void transcationMainMenu(List<Customer> customers, List<Transaction> transactions) {
+			while (true) {
+				System.out.println("\n\t\t\t --- Transaction Menu ---\n");
+				System.out.println("0.  Back");
+				System.out.println("1.  Search Customer Transactions ");
+				System.out.println("2.  Search Transcation Id ");
+				System.out.println("3.  Total Amount In Bank ");
+				System.out.println("4.  Total Transcations In Bank ");
+				System.out.println("10. Main Menu");
+
+				System.out.print("\n-> Select an option : ");
+				int option = scanner.nextInt();
+
+				switch (option) {
+				case 0:
+					System.out.println("<-- Back to The User Menu.");
+					handleAdminOptions(scanner, customers);
+					break;
+
+				case 1:
+					System.out.println("\n\t\t ------ Transcation Of the Accounter --------\n");
+					customerTransaction(scanner, customers);
+					break;
+
+				case 2:
+					System.out.println("\n\t----  Search Transcation Ids -----");
+					
+					 System.out.println("Enter transaction IDs separated by commas (e.g., SAI9871212231,VAM9871212231): ");
+				      String inputId = scanner.nextLine();
+				        List<String> transactionIdsToSearch = Arrays.asList(inputId.split(","));
+
+				       // searchTransactionsByIds(transactionIdsToSearch);
+
+				        scanner.close();		
+				        break;
+
+				case 3:
+				    System.out.println("\n\t\t---- Total Amount In Bank ----\n");
+
+				    double totalAmount = calculateTotalAmount(customers);
+
+				    String formattedAmount = formatTotalAmount(totalAmount);
+				    System.out.println("=> Total Amount In Bank : " + formattedAmount + " Rs");
+
+				 //   String words = AmountToWords.convert(totalAmount);
+				 //   System.out.println("=> Total Amount In Words : " + words + " Rs");
+
+				    break;
+				    
+				case 4:
+					    System.out.println("\n\t\t---- Total Transcations In Bank ----");
+					
+					    for (Customer customer : customers) {
+					    	customer.transcationDisplay();
+					    }
+					    
+					     totalAmount = calculateTotalAmount(customers);
+
+					     formattedAmount = formatTotalAmount(totalAmount);
+					    
+					    System.out.println("\n=> Total Amount In Bank : " + formattedAmount + " Rs");
+	                    break;
+				    
+				case 10:
+					System.out.println("<-- Back to Main Menu.");
+					displayMainMenu();
+					break;
+
+				default:
+					System.out.println("Invalid option. Please choose a valid option.");
+					break;
+				}
+			}
+		}
+
+		protected static void customerTransaction(Scanner scanner, List<Customer> customers) {
+		    while (true) {
+		        System.out.println("\t\t0. Back \t00. Admin Menu \t10. Main Menu \n\n\t\t1. With Account Number\t 2. With Name  3. Transaction Type");
+
+		        try {
+		            System.out.print("\n-> Choose an option : ");
+		            int miniStatementOption = scanner.nextInt();
+
+		            if (miniStatementOption == 0) {
+		                System.out.println("\n<-- Back to the Transaction Menu");
+		                break;
+		            } else if (miniStatementOption == 00) {
+		                System.out.println("\n<-- Back to User Menu");
+		                handleAdminOptions(scanner, customers);
+		                break;
+		            } else if (miniStatementOption == 10) {
+		                System.out.println("\n<-- Back to Main Menu");
+		                displayMainMenu();
+		                break;
+		            }
+
+		            if (miniStatementOption == 1) {
+		                System.out.println("\n\t\t --- Selected Transaction Details With Account Number ---");
+		                System.out.print("\n-> Enter Account Number : ");
+		                long enteredAccountNumber = 0;
+
+		                try {
+		                    enteredAccountNumber = scanner.nextLong();
+		                } catch (InputMismatchException e) {
+		                    System.out.println("Invalid input for account number. Please enter a valid number.");
+		                    scanner.nextLine();
+		                    continue;
+		                }
+
+		                Customer customer = findCustomerByAccountNumber(customers, enteredAccountNumber);
+
+		                if (customer != null) {
+		                    customer.transcationDisplay();
+		                } else {
+		                    System.out.println("Account not found. Please check the account number.");
+		                }
+		            } 
+		            else if (miniStatementOption == 2) {
+		                System.out.println("\n\t\t --- Selected Transaction Details With Customer Name ---");
+		                System.out.print("\n-> Enter the customer name : ");
+		                scanner.nextLine(); 
+		                
+		                String enteredFullName = scanner.nextLine();
+		                Customer customer = findCustomerByFullName(customers, enteredFullName);
+
+		                if (customer != null) {
+		                    customer.transcationDisplay();
+		                } else {
+		                    System.out.println("Account not found.");
+		                }
+		            } else if (miniStatementOption == 3) {
+		                System.out.println("\n\t\t --- Selected Transaction Details With Transaction Type ---");
+		                System.out.print("\n-> Enter Transaction Type : ");
+		                //scanner.nextLine(); 
+		                String enteredTransactionType = scanner.next();
+
+		                List<Customer> matchingCustomers = findCustomersByTransactionType(customers, enteredTransactionType);
+
+		                if (!matchingCustomers.isEmpty()) {
+		                    System.out.println("\nTransactions for Transaction Type: " + enteredTransactionType);
+		                    for (Customer customer : matchingCustomers) {
+		                        customer.displayTranscation(enteredTransactionType);
+		                    }
+		                } else {
+		                    System.out.println("No matching transactions found for the specified type.");
+		                }
+		            }
+		        } catch (InputMismatchException e) {
+		            System.out.println("Invalid input. Please enter a valid number.");
+		            scanner.nextLine(); 
+		        }
+		    }
+		}  
+		
+		    
+		private static List<Customer> findCustomersByTransactionType(List<Customer> customers, String transactionType) {
+		    List<Customer> matchingCustomers = new ArrayList<>();
+		    for (Customer customer : customers) {
+		        if (customer.hasTransactionType(transactionType)) {
+		            matchingCustomers.add(customer);
+		        }
+		    }
+		    return matchingCustomers;
+		}
+
+
+		protected static void displayTotalBankTransaction(List<Customer> customers) {
+			System.out.println("\n\t\t ------- Total Transaction In Bank -------\n");
+			System.out.print("-> Enter the Account Number : ");
+			long accountNumber = scanner.nextLong();
+			scanner.nextLine();
+
+			Customer foundCustomer = findCustomerByAccountNumber(customers, accountNumber);
+
+			if (foundCustomer != null) {
+				displayTransactions(foundCustomer.getTransactionsBank());
+			} else {
+				System.out.println("Account not found.");
+			}
+		}
+
+		
+
+		
+
+		protected static SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
+
+		protected static void displayTransactions(Transaction[] transactions) {
+			System.out.println("\n\t\t\t --- Transaction Details ---\n");
+			System.out.printf("%-20s%-15s%-10s\n", "     Date", "Type", "Amount");
+			System.out.println("--------------------\t---------\t-------");
+
+			for (Transaction transaction : transactions) {
+				System.out.printf("%-20s%-15s%-10.2f\n", dateFormat.format(transaction.getDateTime()),
+						transaction.getType(), transaction.getAmount());
+			}
+		}
+
+
+		public static double calculateTotalAmount(List<Customer> customers) {
+			double totalAmount = 0.0;
+
+			for (Customer customer : customers) {
+				totalAmount += customer.getBalance();
+			}
+
+			return totalAmount;
+		}
+		
+		private static String formatTotalAmount(double totalAmount) {
+	        DecimalFormat decimalFormat = new DecimalFormat("###,###.00");
+	        return decimalFormat.format(totalAmount);
+	    }
+		
+		public void performTransaction(com.sai.Wate.Customer date, String time, String type, double amount) {
+	        transactions.addAll((Collection<? extends com.sai.Wate.Transaction>) new Transaction(date, time, type, amount));
+
+	        double currentAmount = 0;
+			switch (type) {
+	            case "Add":
+	            case "Credited":
+	                currentAmount += amount;
+	                break;
+	            case "Withdraw":
+	            case "Debited":
+	                currentAmount -= amount;
+	                break;
+	        }
+	    }
+
+		
+		 		 
+ 
+	}
+}	
+/*
+ * public static void displayTransactionsByDate(int option) {
+ * System.out.print("\n-> Enter From start date (dd/MM/yyyy) : "); String
+ * startDateInput = scanner.nextLine(); SimpleDateFormat startDateFormat = new
+ * SimpleDateFormat("dd/MM/yyyy"); Date startDate =
+ * startDateFormat.parse(startDateInput, new ParsePosition(0));
+ * 
+ * System.out.print("-> Enter the to date (dd/MM/yyyy) : "); String endDateInput
+ * = scanner.nextLine(); SimpleDateFormat endDateFormat = new
+ * SimpleDateFormat("dd/MM/yyyy"); Date endDate =
+ * endDateFormat.parse(endDateInput, new ParsePosition(0));
+ * 
+ * double total = 0;
+ * 
+ * for (Customer customer : customers) { for (Transaction transaction :
+ * customer.getTransactionsBank()) { Date dateTime = transaction.getDateTime();
+ * 
+ * if (dateTime.after(startDate) && dateTime.before(endDate)) { if (option == 1
+ * || option == 2 && transaction.getType() == TransactionType.WITHDRAW || option
+ * == 3 && transaction.getType() == TransactionType.ADD) { total +=
+ * transaction.getAmount(); } } } }
+ * System.out.println("\nTotal Transactions amount between " + startDateInput +
+ * " and " + endDateInput + " : " + total);
+ * 
+ * } } }
+ */
